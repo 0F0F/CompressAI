@@ -31,6 +31,82 @@ from compressai.models import CompressionModel
 from utils import conv, deconv, update_registered_buffers
 
 from compressai.transforms import RGB2YCbCr, YCbCr2RGB# tensor -> tensor
+class FactorizedPrior(CompressionModel):
+    r"""Factorized Prior model from J. Balle, D. Minnen, S. Singh, S.J. Hwang,
+    N. Johnston: `"Variational Image Compression with a Scale Hyperprior"
+    <https://arxiv.org/abs/1802.01436>`_, Int Conf. on Learning Representations
+    (ICLR), 2018.
+
+    Args:
+        N (int): Number of channels
+        M (int): Number of channels in the expansion layers (last layer of the
+            encoder and last layer of the hyperprior decoder)
+    """
+
+    def __init__(self, N, M, **kwargs):
+        super().__init__(entropy_bottleneck_channels=M, **kwargs)
+
+        self.g_a = nn.Sequential(
+            conv(3, N),
+            GDN(N),
+            conv(N, N),
+            GDN(N),
+            conv(N, N),
+            GDN(N),
+            conv(N, M),
+        )
+
+        self.g_s = nn.Sequential(
+            deconv(M, N),
+            GDN(N, inverse=True),
+            deconv(N, N),
+            GDN(N, inverse=True),
+            deconv(N, N),
+            GDN(N, inverse=True),
+            deconv(N, 3),
+        )
+
+    def forward(self, x):
+        y = self.g_a(x)
+        y_hat, y_likelihoods = self.entropy_bottleneck(y)
+        x_hat = self.g_s(y_hat)
+
+        return {
+            "x_hat": x_hat,
+            "likelihoods": {
+                "y": y_likelihoods,
+            },
+        }
+
+    def load_state_dict(self, state_dict):
+        # Dynamically update the entropy bottleneck buffers related to the CDFs
+        update_registered_buffers(
+            self.entropy_bottleneck,
+            "entropy_bottleneck",
+            ["_quantized_cdf", "_offset", "_cdf_length"],
+            state_dict,
+        )
+        super().load_state_dict(state_dict)
+
+    @classmethod
+    def from_state_dict(cls, state_dict):
+        """Return a new model instance from `state_dict`."""
+        N = state_dict["g_a.0.weight"].size(0)
+        M = state_dict["g_a.6.weight"].size(0)
+        net = cls(N, M)
+        net.load_state_dict(state_dict)
+        return net
+
+    def compress(self, x):
+        y = self.g_a(x)
+        y_strings = self.entropy_bottleneck.compress(y)
+        return {"strings": [y_strings], "shape": y.size()[-2:]}
+
+    def decompress(self, strings, shape):
+        assert isinstance(strings, list) and len(strings) == 1
+        y_hat = self.entropy_bottleneck.decompress(strings[0], shape)
+        x_hat = self.g_s(y_hat)
+        return {"x_hat": x_hat}
 
 class ScaleHyperprior_YUV(CompressionModel):
     r"""Scale Hyperprior model from J. Balle, D. Minnen, S. Singh, S.J. Hwang,
@@ -419,7 +495,7 @@ def main(argv):
     )
 
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
-    net = ScaleHyperprior_YUV(192, 320)
+    net = FactorizedPrior(192, 320)
     net = net.to(device)
     optimizer = optim.Adam(net.parameters(), lr=args.learning_rate)
     aux_optimizer = optim.Adam(net.aux_parameters(), lr=args.aux_learning_rate)
