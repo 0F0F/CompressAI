@@ -419,7 +419,7 @@ def main(argv):
     )
 
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
-    net = AutoEncoder()
+    net = ScaleHyperprior_YUV()
     net = net.to(device)
     optimizer = optim.Adam(net.parameters(), lr=args.learning_rate)
     aux_optimizer = optim.Adam(net.aux_parameters(), lr=args.aux_learning_rate)
