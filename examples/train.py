@@ -28,7 +28,7 @@ from torchvision import transforms
 from compressai.datasets import ImageFolder
 from compressai.layers import GDN
 from compressai.models import CompressionModel
-from compressai.utils import conv, deconv, update_registered_buffers
+from compressai.models.utils import conv, deconv, update_registered_buffers
 
 from compressai.transforms import RGB2YCbCr, YCbCr2RGB# tensor -> tensor
 class FactorizedPrior(CompressionModel):
