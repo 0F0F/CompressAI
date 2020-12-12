@@ -30,6 +30,7 @@ from compressai.layers import GDN
 from compressai.models import CompressionModel
 from compressai.models.utils import conv, deconv, update_registered_buffers
 
+from compressai.entropy_models import EntropyBottleneck, GaussianConditional
 from compressai.transforms import RGB2YCbCr, YCbCr2RGB# tensor -> tensor
 class FactorizedPrior(CompressionModel):
     r"""Factorized Prior model from J. Balle, D. Minnen, S. Singh, S.J. Hwang,
