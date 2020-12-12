@@ -196,33 +196,21 @@ class ScaleHyperprior_YUV(CompressionModel):
 
     def forward(self, x):
         x_yuv = self.rgb2yuv(x).squeeze(0) # shape: [1, 3, w, h]
-        print(x_yuv.size())
         x_luma, x_u, x_v = x_yuv.chunk(3, 1) # y, u, v -> [1, 1, w, h]
-        print(x_luma.size())
-        print(x_u.size())
-        print(x_v.size())
         x_chroma = torch.cat((x_u, x_v), dim=1) # uv -> [1, 2, w, h]
-        print(x_chroma.size())
 
         y_luma = self.g_a_luma(x_luma) # [1, M/2, w/16, h/16]
-        print(y_luma.size())
         y_chroma = self.g_a_chroma(x_chroma) # [1, M/2, w/16, h/16]
-        print(y_chroma.size())
 
         y = torch.cat((y_luma, y_chroma), dim=1) # [1, M, w/16, h/16]
-        print(y.size())
         z = self.h_a(torch.abs(y))
         z_hat, z_likelihoods = self.entropy_bottleneck(z)
         scales_hat = self.h_s(z_hat)
         y_hat, y_likelihoods = self.gaussian_conditional(y, scales_hat) # [1, M, w/16, h/16]
-        print(y_hat.size())
 
         y_hat_luma1, y_hat_luma2, y_hat_u, y_hat_v = y_hat.chunk(4, 1) # [1, M/4, w/16, h/16]
         y_hat_luma = torch.cat((y_hat_luma1, y_hat_luma2), dim=1) # [1, M/2, w/16, h/16]
         y_hat_chroma = torch.cat((y_hat_u, y_hat_v), dim=1) # [1, M/2, w/16, h/16]
-        print(y_hat_luma.size())
-        print(y_hat_u.size())
-        print(y_hat_v.size())
 
         x_hat_luma = self.g_s_luma(y_hat_luma)
         x_hat_chroma = self.g_s_chroma(y_hat_chroma)
