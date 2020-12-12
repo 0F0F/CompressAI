@@ -72,6 +72,7 @@ models = {
     "jarhp": JointAutoregressiveHierarchicalPriors,
     "mean-scale-hyperprior": MeanScaleHyperprior,
     "scale-hyperprior": ScaleHyperprior,
+    "proposed": Proposed
 }
 
 

@@ -31,7 +31,7 @@ class RGB2YCbCr:
 class YCbCr2RGB:
     """Convert a YCbCr tensor to RGB.
     The tensor is expected to be in the [0, 1] floating point range, with a
-    shape of (3xHxW) or (Nx3xHxW).
+    shape of (3xHxW) or (Nx3xHxW)._
     """
 
     def __call__(self, ycbcr):
