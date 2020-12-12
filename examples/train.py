@@ -217,11 +217,12 @@ class ScaleHyperprior_YUV(CompressionModel):
         y_hat, y_likelihoods = self.gaussian_conditional(y, scales_hat) # [1, M, w/16, h/16]
         print(y_hat.size())
 
-        y_hat_luma, y_hat_u, y_hat_v = y_hat.chunk(3, 1) # [
+        y_hat_luma1, y_hat_luma2, y_hat_u, y_hat_v = y_hat.chunk(4, 1) # [1, M/4, w/16, h/16]
+        y_hat_luma = torch.cat((y_hat_luma1, y_hat_luma2), dim=1) # [1, M/2, w/16, h/16]
+        y_hat_chroma = torch.cat((y_hat_u, y_hat_v), dim=1) # [1, M/2, w/16, h/16]
         print(y_hat_luma.size())
         print(y_hat_u.size())
         print(y_hat_v.size())
-        y_hat_chroma = torch.cat((y_hat_u, y_hat_v), dim=1)
 
         x_hat_luma = self.g_s_luma(y_hat_luma)
         x_hat_chroma = self.g_s_chroma(y_hat_chroma)
