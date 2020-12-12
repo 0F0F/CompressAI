@@ -125,8 +125,8 @@ class ScaleHyperprior_YUV(CompressionModel):
         self.rgb2yuv = RGB2YCbCr()
         self.yuv2rgb = YCbCr2RGB()
 
-        _N = N / 2
-        _M = M / 2
+        _N = N // 2
+        _M = M // 2
 
 #   LUMA
         self.g_a_luma = nn.Sequential(
