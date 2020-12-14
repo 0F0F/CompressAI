@@ -322,7 +322,8 @@ def _encode(image, metric, quality, coder, output):
     checkpoint_path = "../params/{}/checkpoint.pth.tar".format(quality)
     state_dict = torch.load(checkpoint_path)["state_dict"]
     #net = ScaleHyperprior_YUV.from_state_dict(torch.load(checkpoint_path)).eval()
-    net = ScaleHyperprior_YUV(192, 320).load_state_dict(state_dict)
+    net = ScaleHyperprior_YUV(192, 320)
+    net.load_state_dict(state_dict)
 
     #net = models[model](quality=quality, metric=metric, pretrained=True).eval()
     load_time = time.time() - start
