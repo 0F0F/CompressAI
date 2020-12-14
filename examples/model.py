@@ -143,18 +143,7 @@ class ScaleHyperprior_YUV(CompressionModel):
 
     def load_state_dict(self, state_dict):
         # Dynamically update the entropy bottleneck buffers related to the CDFs
-        update_registered_buffers(
-            self.entropy_bottleneck,
-            "entropy_bottleneck",
-            ["_quantized_cdf", "_offset", "_cdf_length"],
-            state_dict,
-        )
-        update_registered_buffers(
-            self.gaussian_conditional,
-            "gaussian_conditional",
-            ["_quantized_cdf", "_offset", "_cdf_length", "scale_table"],
-            state_dict,
-        )
+
         super().load_state_dict(state_dict)
 
     @classmethod
