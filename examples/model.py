@@ -29,6 +29,12 @@ from compressai.entropy_models import EntropyBottleneck, GaussianConditional
 from compressai.transforms import RGB2YCbCr, YCbCr2RGB# tensor -> tensor
 
 
+# From Balle's tensorflow compression examples
+SCALES_MIN = 0.11
+SCALES_MAX = 256
+SCALES_LEVELS = 64
+
+
 def get_scale_table(
     min=SCALES_MIN, max=SCALES_MAX, levels=SCALES_LEVELS
 ):  # pylint: disable=W0622
