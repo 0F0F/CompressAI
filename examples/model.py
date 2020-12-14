@@ -328,7 +328,8 @@ def _encode(image, metric, quality, coder, output):
 
     img = load_image(image)
     start = time.time()
-    net = ScaleHyperprior_YUV(192,320)
+    checkpoint_path = "../params/{}/".format(quality)
+    net = ScaleHyperprior_YUV.from_state_dict(torch.load(checkpoint_path)).eval()
     #net = models[model](quality=quality, metric=metric, pretrained=True).eval()
     load_time = time.time() - start
 
@@ -379,7 +380,9 @@ def _decode(inputpath, coder, show, output=None):
 
     print(f"Model: {model:s}, metric: {metric:s}, quality: {quality:d}")
     start = time.time()
-    net = ScaleHyperprior_YUV(192,320)
+    #net = ScaleHyperprior_YUV(192,320)
+    checkpoint_path = "../params/{}/".format(quality)
+    net = ScaleHyperprior_YUV.from_state_dict(torch.load(checkpoint_path)).eval()
     #net = models[model](quality=quality, metric=metric, pretrained=True).eval()
     load_time = time.time() - start
 
@@ -411,7 +414,7 @@ def encode(argv):
     parser.add_argument(
         "-q",
         "--quality",
-        choices=list(range(1, 3)),
+        choices=list(range(1, 4)),
         type=int,
         default=3,
         help="Quality setting (default: %(default)s)",
