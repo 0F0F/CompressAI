@@ -320,6 +320,12 @@ def _encode(image, metric, quality, coder, output):
     img = load_image(image)
     start = time.time()
     checkpoint_path = "../params/{}/checkpoint.pth.tar".format(quality)
+    state_dict = torch.load(checkpoint_path)
+    from collections import OrderedDict
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        print(k)
+    exit(-1)
     #net = ScaleHyperprior_YUV.from_state_dict(torch.load(checkpoint_path)).eval()
     net = ScaleHyperprior_YUV(192, 320).load_state_dict(torch.load(checkpoint_path)).eval()
 
