@@ -331,7 +331,9 @@ def _encode(image, metric, quality, coder, output):
     img = load_image(image)
     start = time.time()
     checkpoint_path = "../params/{}/checkpoint.pth.tar".format(quality)
-    net = ScaleHyperprior_YUV.from_state_dict(torch.load(checkpoint_path)).eval()
+    #net = ScaleHyperprior_YUV.from_state_dict(torch.load(checkpoint_path)).eval()
+    net = ScaleHyperprior_YUV(192, 320).load_state_dict(torch.load(checkpoint_path)).eval()
+
     #net = models[model](quality=quality, metric=metric, pretrained=True).eval()
     load_time = time.time() - start
 
@@ -384,7 +386,8 @@ def _decode(inputpath, coder, show, output=None):
     start = time.time()
     #net = ScaleHyperprior_YUV(192,320)
     checkpoint_path = "../params/{}/checkpoint.pth.tar".format(quality)
-    net = ScaleHyperprior_YUV.from_state_dict(torch.load(checkpoint_path)).eval()
+    #net = ScaleHyperprior_YUV.from_state_dict(torch.load(checkpoint_path)).eval()
+    net = ScaleHyperprior_YUV(192, 320).load_state_dict(torch.load(checkpoint_path)).eval()
     #net = models[model](quality=quality, metric=metric, pretrained=True).eval()
     load_time = time.time() - start
 
