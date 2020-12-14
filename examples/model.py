@@ -168,6 +168,7 @@ class ScaleHyperprior_YUV(CompressionModel):
         x_luma, x_u, x_v = x_yuv.chunk(3, 1)  # y, u, v -> [1, 1, w, h]
         x_chroma = torch.cat((x_u, x_v), dim=1)  # uv -> [1, 2, w, h]
 
+        print(x_luma.size())
         y_luma = self.g_a_luma(x_luma)  # [1, M/2, w/16, h/16]
         y_chroma = self.g_a_chroma(x_chroma)  # [1, M/2, w/16, h/16]
 
