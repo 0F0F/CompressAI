@@ -15,7 +15,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from PIL import Image
-from torchvision.transforms import ToPILImage, ToTenso
+from torchvision.transforms import ToPILImage, ToTensor
 
 from torch.utils.data import DataLoader
 from torchvision import transforms
