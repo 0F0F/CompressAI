@@ -281,7 +281,7 @@ def get_header(model_name, metric, quality):
     - 4 bits for metric
     - 4 bits for quality param
     """
-    metric = metric_ids[metric]
+    metric = 0
     code = (metric << 4) | (quality - 1 & 0x0F)
     return 0, code
     #return model_ids[model_name], code
