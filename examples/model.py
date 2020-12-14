@@ -28,6 +28,13 @@ from compressai.models.utils import conv, deconv, update_registered_buffers
 from compressai.entropy_models import EntropyBottleneck, GaussianConditional
 from compressai.transforms import RGB2YCbCr, YCbCr2RGB# tensor -> tensor
 
+
+def get_scale_table(
+    min=SCALES_MIN, max=SCALES_MAX, levels=SCALES_LEVELS
+):  # pylint: disable=W0622
+    return torch.exp(torch.linspace(math.log(min), math.log(max), levels))
+
+
 class ScaleHyperprior_YUV(CompressionModel):
     r"""Scale Hyperprior model from J. Balle, D. Minnen, S. Singh, S.J. Hwang,
     N. Johnston: `"Variational Image Compression with a Scale Hyperprior"
