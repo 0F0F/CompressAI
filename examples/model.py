@@ -379,9 +379,8 @@ def _encode(image, metric, quality, coder, output):
     enc_start = time.time()
     img = load_image(image)
     start = time.time()
-    checkpoint_path = "../params/{}/checkpoint.pth.tar".format(quality)
+    checkpoint_path = "../params_tariq/{}/checkpoint.pth.tar".format(quality)
     state_dict = torch.load(checkpoint_path)["state_dict"]
-    net = ScaleHyperprior_YUV(192, 320)
     net = AutoEncoder()
     net.load_state_dict(state_dict)
     net = net.eval()
@@ -436,9 +435,8 @@ def _decode(inputpath, coder, show, output=None):
 
     print(f"Model: {model:s}, metric: {metric:s}, quality: {quality:d}")
     start = time.time()
-    checkpoint_path = "../params/{}/checkpoint.pth.tar".format(quality)
+    checkpoint_path = "../params_tariq/{}/checkpoint.pth.tar".format(quality)
     state_dict = torch.load(checkpoint_path)["state_dict"]
-    net = ScaleHyperprior_YUV(192, 320)
     net = AutoEncoder()
     net.load_state_dict(state_dict)
     net = net.eval()
