@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import compressai
 from compressai.datasets import ImageFolder
-from compressai.layers import GDN
+from compressai.layers import GDN, AttentionBlock
 from compressai.models import CompressionModel
 from compressai.models.utils import conv, deconv, update_registered_buffers
 
@@ -338,6 +338,40 @@ def crop(x, size):
         value=0,
     )
 
+class AutoEncoder(CompressionModel):
+    """Simple autoencoder with a factorized prior """
+
+    def __init__(self, N=128):
+        super().__init__(entropy_bottleneck_channels=N)
+
+        self.encode = nn.Sequential(
+            conv(3, N, kernel_size=9, stride=4),
+            GDN(N),
+            conv(N, N),
+            AttentionBlock(N),
+            GDN(N),
+            conv(N, N),
+            AttentionBlock(N),
+        )
+
+        self.decode = nn.Sequential(
+            deconv(N, N),
+            GDN(N, inverse=True),
+            deconv(N, N),
+            GDN(N, inverse=True),
+            deconv(N, 3, kernel_size=9, stride=4),
+        )
+
+    def forward(self, x):
+        y = self.encode(x)
+        y_hat, y_likelihoods = self.entropy_bottleneck(y)
+        x_hat = self.decode(y_hat)
+        return {
+            "x_hat": x_hat,
+            "likelihoods": {
+                "y": y_likelihoods,
+            },
+        }
 
 def _encode(image, metric, quality, coder, output):
     compressai.set_entropy_coder(coder)
@@ -348,6 +382,7 @@ def _encode(image, metric, quality, coder, output):
     checkpoint_path = "../params/{}/checkpoint.pth.tar".format(quality)
     state_dict = torch.load(checkpoint_path)["state_dict"]
     net = ScaleHyperprior_YUV(192, 320)
+    net = AutoEncoder()
     net.load_state_dict(state_dict)
     net = net.eval()
     net.update()
