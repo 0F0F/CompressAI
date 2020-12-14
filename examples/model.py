@@ -333,6 +333,7 @@ def _encode(image, metric, quality, coder, output):
     net = ScaleHyperprior_YUV(192, 320)
     net.load_state_dict(state_dict)
     net = net.eval()
+    net.update()
 
     #net = models[model](quality=quality, metric=metric, pretrained=True).eval()
     load_time = time.time() - start
