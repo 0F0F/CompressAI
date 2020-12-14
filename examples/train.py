@@ -228,7 +228,7 @@ class ScaleHyperprior_YUV(CompressionModel):
         )
 
 
-        self.gaussian_conditional = GaussianConditional(None)
+        self.gussian_conditional = GaussianConditional(None)
         self.N = int(N)
         self.M = int(M)
 
@@ -582,6 +582,8 @@ def main(argv):
                 },
                 is_best,
             )
+            if is_best:
+                print(net.state_dict())
 
 
 if __name__ == "__main__":
