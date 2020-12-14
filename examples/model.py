@@ -165,7 +165,7 @@ class ScaleHyperprior_YUV(CompressionModel):
 
     def compress(self, x):
         print(x.size())
-        x_yuv = self.rgb2yuv(x).squeeze(0)  # shape: [1, 3, w, h]
+        x_yuv = self.rgb2yuv(x)  # shape: [1, 3, w, h]
         print(x_yuv.size())
         x_luma, x_u, x_v = x_yuv.chunk(3, 1)  # y, u, v -> [1, 1, w, h]
         print(x_luma.size())
