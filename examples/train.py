@@ -26,12 +26,49 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 from compressai.datasets import ImageFolder
-from compressai.layers import GDN
+from compressai.layers import GDN, AttentionBlock
 from compressai.models import CompressionModel
 from compressai.models.utils import conv, deconv, update_registered_buffers
 
 from compressai.entropy_models import EntropyBottleneck, GaussianConditional
 from compressai.transforms import RGB2YCbCr, YCbCr2RGB# tensor -> tensor
+
+
+class AutoEncoder(CompressionModel):
+    """Simple autoencoder with a factorized prior """
+
+    def __init__(self, N=128):
+        super().__init__(entropy_bottleneck_channels=N)
+
+        self.encode = nn.Sequential(
+            conv(3, N, kernel_size=9, stride=4),
+            GDN(N),
+            conv(N, N),
+            AttentionBlock(N),
+            GDN(N),
+            conv(N, N),
+            AttentionBlock(N),
+        )
+
+        self.decode = nn.Sequential(
+            deconv(N, N),
+            GDN(N, inverse=True),
+            deconv(N, N),
+            GDN(N, inverse=True),
+            deconv(N, 3, kernel_size=9, stride=4),
+        )
+
+    def forward(self, x):
+        y = self.encode(x)
+        y_hat, y_likelihoods = self.entropy_bottleneck(y)
+        x_hat = self.decode(y_hat)
+        return {
+            "x_hat": x_hat,
+            "likelihoods": {
+                "y": y_likelihoods,
+            },
+        }
+
 class FactorizedPrior(CompressionModel):
     r"""Factorized Prior model from J. Balle, D. Minnen, S. Singh, S.J. Hwang,
     N. Johnston: `"Variational Image Compression with a Scale Hyperprior"
@@ -512,7 +549,7 @@ def main(argv):
     )
 
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
-    net = ScaleHyperprior_YUV(192, 320)
+    net = AutoEncoder()
     net = net.to(device)
     optimizer = optim.Adam(net.parameters(), lr=args.learning_rate)
     aux_optimizer = optim.Adam(net.aux_parameters(), lr=args.aux_learning_rate)
