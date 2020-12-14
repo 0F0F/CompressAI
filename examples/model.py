@@ -160,8 +160,10 @@ class ScaleHyperprior_YUV(CompressionModel):
     @classmethod
     def from_state_dict(cls, state_dict):
         """Return a new model instance from `state_dict`."""
-        N = state_dict["g_a_luma.0.weight"].size(0) * 2
-        M = state_dict["g_a_luma.6.weight"].size(0) * 2
+        N = 192
+        M = 320
+        #N = state_dict["g_a_luma.0.weight"].size(0) * 2
+        #M = state_dict["g_a_luma.6.weight"].size(0) * 2
         net = cls(N, M)
         net.load_state_dict(state_dict)
         return net
