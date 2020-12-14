@@ -222,8 +222,9 @@ class ScaleHyperprior_YUV(CompressionModel):
 
         x_hat_luma = self.g_s_luma(y_hat_luma)
         x_hat_chroma = self.g_s_chroma(y_hat_chroma)
+        x_hat_chroma = torch.cat((x_hat_luma, x_hat_chroma), dim=1)
+        x_hat = self.yuv2rgb(x_hat_chroma)
 
-        x_hat = torch.cat((x_hat_luma, x_hat_chroma), dim=1)
         return {"x_hat": x_hat}
 
 
