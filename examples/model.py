@@ -439,6 +439,7 @@ def _decode(inputpath, coder, show, output=None):
     checkpoint_path = "../params/{}/checkpoint.pth.tar".format(quality)
     state_dict = torch.load(checkpoint_path)["state_dict"]
     net = ScaleHyperprior_YUV(192, 320)
+    net = AutoEncoder()
     net.load_state_dict(state_dict)
     net = net.eval()
     net.update()
