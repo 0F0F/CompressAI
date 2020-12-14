@@ -545,8 +545,6 @@ def main(argv):
                 },
                 is_best,
             )
-            if is_best:
-                print(net.state_dict())
 
 
 if __name__ == "__main__":
