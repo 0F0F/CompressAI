@@ -34,6 +34,7 @@ __all__ = [
     "CompressionModel",
     "FactorizedPrior",
     "ScaleHyperprior",
+    "ScaleHyperprior_YUV",
     "MeanScaleHyperprior",
     "JointAutoregressiveHierarchicalPriors",
 ]
@@ -216,8 +217,8 @@ class ScaleHyperprior_YUV(CompressionModel):
         self.rgb2yuv = RGB2YCbCr()
         self.yuv2rgb = YCbCr2RGB()
 
-        _N = N / 2
-        _M = M / 2
+        _N = N // 2
+        _M = M // 2
 
 #   LUMA
         self.g_a_luma = nn.Sequential(
@@ -298,14 +299,14 @@ class ScaleHyperprior_YUV(CompressionModel):
         scales_hat = self.h_s(z_hat)
         y_hat, y_likelihoods = self.gaussian_conditional(y, scales_hat) # [1, M, w/16, h/16]
 
-        y_hat_luma, y_hat_u, y_hat_v = y_hat.chunk(3, 1)
-        y_hat_chroma = torch.cat((y_hat_u, y_hat_v), dime=1)
+        y_hat_luma1, y_hat_luma2, y_hat_u, y_hat_v = y_hat.chunk(4, 1) # [1, M/4, w/16, h/16]
+        y_hat_luma = torch.cat((y_hat_luma1, y_hat_luma2), dim=1) # [1, M/2, w/16, h/16]
+        y_hat_chroma = torch.cat((y_hat_u, y_hat_v), dim=1) # [1, M/2, w/16, h/16]
 
         x_hat_luma = self.g_s_luma(y_hat_luma)
         x_hat_chroma = self.g_s_chroma(y_hat_chroma)
-
-        x_hat = torch.cat((x_hat_luma, x_hat_chroma), dim=1)
-
+        x_hat_yuv = torch.cat((x_hat_luma, x_hat_chroma), dim=1)
+        x_hat = self.yuv2rgb(x_hat_yuv)
         return {
             "x_hat": x_hat,
             "likelihoods": {"y": y_likelihoods, "z": z_likelihoods},
@@ -330,8 +331,8 @@ class ScaleHyperprior_YUV(CompressionModel):
     @classmethod
     def from_state_dict(cls, state_dict):
         """Return a new model instance from `state_dict`."""
-        N = state_dict["g_a.0.weight"].size(0)
-        M = state_dict["g_a.6.weight"].size(0)
+        N = state_dict["g_a_luma.0.weight"].size(0) * 2
+        M = state_dict["g_a_luma.6.weight"].size(0) * 2
         net = cls(N, M)
         net.load_state_dict(state_dict)
         return net
@@ -343,7 +344,14 @@ class ScaleHyperprior_YUV(CompressionModel):
         super().update(force=force)
 
     def compress(self, x):
-        y = self.g_a(x)
+        x_yuv = self.rgb2yuv(x)  # shape: [1, 3, w, h]
+        x_luma, x_u, x_v = x_yuv.chunk(3, 1)  # y, u, v -> [1, 1, w, h]
+        x_chroma = torch.cat((x_u, x_v), dim=1)  # uv -> [1, 2, w, h]
+
+        y_luma = self.g_a_luma(x_luma)  # [1, M/2, w/16, h/16]
+        y_chroma = self.g_a_chroma(x_chroma)  # [1, M/2, w/16, h/16]
+
+        y = torch.cat((y_luma, y_chroma), dim=1)  # [1, M, w/16, h/16]
         z = self.h_a(torch.abs(y))
 
         z_strings = self.entropy_bottleneck.compress(z)
@@ -360,7 +368,16 @@ class ScaleHyperprior_YUV(CompressionModel):
         scales_hat = self.h_s(z_hat)
         indexes = self.gaussian_conditional.build_indexes(scales_hat)
         y_hat = self.gaussian_conditional.decompress(strings[0], indexes)
-        x_hat = self.g_s(y_hat).clamp_(0, 1)
+
+        y_hat_luma1, y_hat_luma2, y_hat_u, y_hat_v = y_hat.chunk(4, 1) # [1, M/4, w/16, h/16]
+        y_hat_luma = torch.cat((y_hat_luma1, y_hat_luma2), dim=1) # [1, M/2, w/16, h/16]
+        y_hat_chroma = torch.cat((y_hat_u, y_hat_v), dim=1) # [1, M/2, w/16, h/16]
+
+        x_hat_luma = self.g_s_luma(y_hat_luma)
+        x_hat_chroma = self.g_s_chroma(y_hat_chroma)
+        x_hat_chroma = torch.cat((x_hat_luma, x_hat_chroma), dim=1)
+        x_hat = self.yuv2rgb(x_hat_chroma)
+
         return {"x_hat": x_hat}
 
 class ScaleHyperprior(CompressionModel):

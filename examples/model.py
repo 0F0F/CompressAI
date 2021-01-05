@@ -28,6 +28,8 @@ from compressai.models.utils import conv, deconv, update_registered_buffers
 from compressai.entropy_models import EntropyBottleneck, GaussianConditional
 from compressai.transforms import RGB2YCbCr, YCbCr2RGB# tensor -> tensor
 
+from compressai.models import ScaleHyperprior
+
 
 metric_ids = {
     "mse": 0,
