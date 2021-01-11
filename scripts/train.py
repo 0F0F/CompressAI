@@ -17,6 +17,7 @@ import math
 import random
 import shutil
 import sys
+import os
 
 import torch
 import torch.nn as nn
@@ -251,6 +252,11 @@ class AverageMeter:
 
 def main(argv):
     args = parse_args(argv)
+    if args.save:
+        try:
+            os.mkdir("./checkpoints/{lmbda}".format(lmbda=args.lmbda))
+        except FileExistsError:
+            pass
 
     if args.seed is not None:
         torch.manual_seed(args.seed)
@@ -320,6 +326,11 @@ def main(argv):
                 },
                 is_best,
             )
+
+    if args.save:
+        shutil.move("checkpoint.pth.tar", "checkpoints/%s/checkpoint.pth.tar" % args.lmbda)
+        shutil.move("checkpoint_best_loss.pth.tar",
+                        "checkpoints/%s/checkpoint_best_loss.pth.tar" % args.lmbda)
 
 
 if __name__ == "__main__":
